@@ -131,159 +131,146 @@ client.on('guildMemberAdd', async member => {
 });
 
 client.on('interactionCreate', async interaction => {
-    if (interaction.isChatInputCommand()) {
-        const { commandName } = interaction;
+    try {
+        if (interaction.isChatInputCommand()) {
+            const { commandName } = interaction;
 
-        if (commandName === 'texto') {
-            const channel = interaction.options.getChannel('canal');
-            const messageContent = interaction.options.getString('mensagem');
+            if (commandName === 'texto') {
+                const channel = interaction.options.getChannel('canal');
+                const messageContent = interaction.options.getString('mensagem');
 
-            try {
                 await channel.send(messageContent);
                 await interaction.reply({ content: `✅ Mensagem enviada com sucesso no canal ${channel}!`, ephemeral: true });
-            } catch (error) {
-                console.error(error);
-                await interaction.reply({ content: '❌ Ocorreu um erro ao tentar enviar a mensagem neste canal.', ephemeral: true });
-            }
-        } 
-        
-        else if (commandName === 'setup') {
-            const tipoPainel = interaction.options.getString('painel');
-
-            if (tipoPainel === 'verificacao') {
-                const embedVerif = new EmbedBuilder()
-                    .setTitle('🎭 Sistema de Verificação - Sociedade Imperial')
-                    .setDescription(
-                        '**Atenção:** Siga rigorosamente o processo abaixo para liberar o seu acesso ao servidor.\n\n' +
-                        'Clique no botão abaixo para informar o seu **Nome/RG** (obrigatório com o caractere underline `_`) e o seu **ID** na cidade. Seu apelido será alterado automaticamente e o seu cargo será concedido.'
-                    )
-                    .setColor(0x0f0f0f)
-                    .setImage(WELCOME_IMAGE_URL);
-
-                const row = new ActionRowBuilder().addComponents(
-                    new ButtonBuilder()
-                        .setCustomId('btn_abrir_verificacao')
-                        .setLabel('Fazer Verificação')
-                        .setStyle(ButtonStyle.Success)
-                        .setEmoji('🛡️')
-                );
-
-                await interaction.reply({ content: 'Painel de verificação enviado!', ephemeral: true });
-                await interaction.channel.send({ embeds: [embedVerif], components: [row] });
             } 
             
-            else if (tipoPainel === 'tickets') {
-                const embedTicket = new EmbedBuilder()
-                    .setTitle('📦 Central de Encomendas e Atendimento - Sociedade Imperial')
-                    .setDescription('Precisa realizar uma encomenda ou falar com a nossa equipe?\n\nSelecione uma das opções abaixo no menu suspenso para abrir o seu canal de atendimento privado.')
-                    .setColor(0x0f0f0f)
-                    .setImage(WELCOME_IMAGE_URL);
+            else if (commandName === 'setup') {
+                const tipoPainel = interaction.options.getString('painel');
 
-                const selectMenu = new StringSelectMenuBuilder()
-                    .setCustomId('select_ticket')
-                    .setPlaceholder('Selecione o tipo de atendimento...')
-                    .addOptions([
-                        {
-                            label: 'Realizar Pedido',
-                            description: 'Faça a sua encomenda ou pedido exclusivo.',
-                            value: 'pedido',
-                            emoji: '📦'
-                        },
-                        {
-                            label: 'Atendimento',
-                            description: 'Fale diretamente com a nossa equipe de suporte/gestão.',
-                            value: 'atendimento',
-                            emoji: '💬'
-                        }
-                    ]);
+                if (tipoPainel === 'verificacao') {
+                    const embedVerif = new EmbedBuilder()
+                        .setTitle('🎭 Sistema de Verificação - Sociedade Imperial')
+                        .setDescription(
+                            '**Atenção:** Siga rigorosamente o processo abaixo para liberar o seu acesso ao servidor.\n\n' +
+                            'Clique no botão abaixo para informar o seu **Nome/RG** (obrigatório com o caractere underline `_`) e o seu **ID** na cidade. Seu apelido será alterado automaticamente e o seu cargo será concedido.'
+                        )
+                        .setColor(0x0f0f0f)
+                        .setImage(WELCOME_IMAGE_URL);
 
-                const row = new ActionRowBuilder().addComponents(selectMenu);
+                    const row = new ActionRowBuilder().addComponents(
+                        new ButtonBuilder()
+                            .setCustomId('btn_abrir_verificacao')
+                            .setLabel('Fazer Verificação')
+                            .setStyle(ButtonStyle.Success)
+                            .setEmoji('🛡️')
+                    );
 
-                await interaction.reply({ content: 'Painel de tickets/encomendas enviado!', ephemeral: true });
-                await interaction.channel.send({ embeds: [embedTicket], components: [row] });
+                    await interaction.reply({ content: 'Painel de verificação enviado!', ephemeral: true });
+                    await interaction.channel.send({ embeds: [embedVerif], components: [row] });
+                } 
+                
+                else if (tipoPainel === 'tickets') {
+                    const embedTicket = new EmbedBuilder()
+                        .setTitle('📦 Central de Encomendas e Atendimento - Sociedade Imperial')
+                        .setDescription('Precisa realizar uma encomenda ou falar com a nossa equipe?\n\nSelecione uma das opções abaixo no menu suspenso para abrir o seu canal de atendimento privado.')
+                        .setColor(0x0f0f0f)
+                        .setImage(WELCOME_IMAGE_URL);
+
+                    const selectMenu = new StringSelectMenuBuilder()
+                        .setCustomId('select_ticket')
+                        .setPlaceholder('Selecione o tipo de atendimento...')
+                        .addOptions([
+                            {
+                                label: 'Realizar Pedido',
+                                description: 'Faça a sua encomenda ou pedido exclusivo.',
+                                value: 'pedido',
+                                emoji: '📦'
+                            },
+                            {
+                                label: 'Atendimento',
+                                description: 'Fale diretamente com a nossa equipe de suporte/gestão.',
+                                value: 'atendimento',
+                                emoji: '💬'
+                            }
+                        ]);
+
+                    const row = new ActionRowBuilder().addComponents(selectMenu);
+
+                    await interaction.reply({ content: 'Painel de tickets/encomendas enviado!', ephemeral: true });
+                    await interaction.channel.send({ embeds: [embedTicket], components: [row] });
+                }
             }
         }
-    }
 
-    if (interaction.isButton() && interaction.customId === 'btn_abrir_verificacao') {
-        const modal = new ModalBuilder()
-            .setCustomId('modal_verificacao_simples')
-            .setTitle('Registro de Identidade');
+        else if (interaction.isButton() && interaction.customId === 'btn_abrir_verificacao') {
+            const modal = new ModalBuilder()
+                .setCustomId('modal_verificacao_simples')
+                .setTitle('Registro de Identidade');
 
-        const nomeInput = new TextInputBuilder()
-            .setCustomId('input_nome')
-            .setLabel('Nome (RG / Personagem)')
-            .setPlaceholder('Ex: Don_Corleone')
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true);
+            const nomeInput = new TextInputBuilder()
+                .setCustomId('input_nome')
+                .setLabel('Nome (RG / Personagem)')
+                .setPlaceholder('Ex: Don_Corleone')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true);
 
-        const idInput = new TextInputBuilder()
-            .setCustomId('input_id')
-            .setLabel('ID na Cidade')
-            .setPlaceholder('Ex: 123')
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true);
+            const idInput = new TextInputBuilder()
+                .setCustomId('input_id')
+                .setLabel('ID na Cidade')
+                .setPlaceholder('Ex: 123')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true);
 
-        modal.addComponents(
-            new ActionRowBuilder().addComponents(nomeInput),
-            new ActionRowBuilder().addComponents(idInput)
-        );
+            modal.addComponents(
+                new ActionRowBuilder().addComponents(nomeInput),
+                new ActionRowBuilder().addComponents(idInput)
+            );
 
-        await interaction.showModal(modal);
-    }
-
-    if (interaction.isModalSubmit() && interaction.customId === 'modal_verificacao_simples') {
-        const nome = interaction.fields.getTextInputValue('input_nome').trim();
-        const idCidade = interaction.fields.getTextInputValue('input_id').trim();
-        const member = interaction.member;
-
-        if (!nome.includes('_')) {
-            return interaction.reply({ 
-                content: `❌ **Verificação negada!** O seu nome no formato RP deve conter obrigatoriamente o underline (\`_\`), seguindo o padrão da cidade (Ex: \`Don_Corleone\`).`, 
-                ephemeral: true 
-            });
+            await interaction.showModal(modal);
         }
 
-        const novoApelido = `${nome} | ${idCidade}`;
-        
-        await interaction.deferReply({ ephemeral: true });
+        else if (interaction.isModalSubmit() && interaction.customId === 'modal_verificacao_simples') {
+            const nome = interaction.fields.getTextInputValue('input_nome').trim();
+            const idCidade = interaction.fields.getTextInputValue('input_id').trim();
+            const member = interaction.member;
 
-        try {
+            if (!nome.includes('_')) {
+                return interaction.reply({ 
+                    content: `❌ **Verificação negada!** O seu nome no formato RP deve conter obrigatoriamente o underline (\`_\`), seguindo o padrão da cidade (Ex: \`Don_Corleone\`).`, 
+                    ephemeral: true 
+                });
+            }
+
+            const novoApelido = `${nome} | ${idCidade}`;
+            
+            await interaction.deferReply({ ephemeral: true });
+
             await member.setNickname(novoApelido);
             await member.roles.add(ROLE_NOVO_CARGO_ID);
 
             await interaction.editReply({ 
                 content: `✅ **Verificação Concluída com Sucesso!**\n\n• Apelido alterado para: **${novoApelido}**\n• Cargo principal atribuído com sucesso.` 
             });
-        } catch (error) {
-            console.error('Erro na verificação:', error);
-            await interaction.editReply({ 
-                content: `⚠️ Ocorreu um erro ao alterar seu apelido ou atribuir o cargo. Certifique-se de que o cargo do bot está posicionado acima na hierarquia do Discord.` 
-            });
         }
-    }
 
-    if (interaction.isStringSelectMenu() && interaction.customId === 'select_ticket') {
-        // 1. Responde IMEDIATAMENTE (defer) para evitar o erro de tempo limite de 3 segundos do Discord
-        await interaction.deferReply({ ephemeral: true });
+        else if (interaction.isStringSelectMenu() && interaction.customId === 'select_ticket') {
+            await interaction.deferReply({ ephemeral: true });
 
-        const tipo = interaction.values[0];
-        const guild = interaction.guild;
-        const member = interaction.member;
+            const tipo = interaction.values[0];
+            const guild = interaction.guild;
+            const member = interaction.member;
 
-        try {
-            // Cria o canal dentro da categoria informada
+            // Cria o canal dentro da categoria respeitando as permissões herdadas/configuradas
             const ticketChannel = await guild.channels.create({
                 name: `${tipo}-${member.user.username}`,
                 type: ChannelType.GuildText,
                 parent: TICKET_CATEGORY_ID,
                 permissionOverwrites: [
                     {
-                        id: guild.id, // Oculta para @everyone
+                        id: guild.id,
                         deny: [PermissionsBitField.Flags.ViewChannel],
                     },
                     {
-                        id: member.id, // Permite para quem abriu o ticket
+                        id: member.id,
                         allow: [
                             PermissionsBitField.Flags.ViewChannel,
                             PermissionsBitField.Flags.SendMessages,
@@ -291,7 +278,7 @@ client.on('interactionCreate', async interaction => {
                         ],
                     },
                     {
-                        id: client.user.id, // Permissões do bot
+                        id: client.user.id,
                         allow: [
                             PermissionsBitField.Flags.ViewChannel,
                             PermissionsBitField.Flags.SendMessages,
@@ -320,26 +307,30 @@ client.on('interactionCreate', async interaction => {
             );
 
             await ticketChannel.send({ content: `${member}`, embeds: [embedWelcome], components: [closeRow] });
-            
-            // Edita a resposta adiada informando que deu certo
             await interaction.editReply({ content: `✅ Seu canal foi aberto com sucesso em ${ticketChannel}!` });
-
-        } catch (error) {
-            console.error('Erro ao criar canal de ticket:', error);
-            await interaction.editReply({ content: '❌ Ocorreu um erro ao tentar criar o seu canal. Verifique as permissões de "Gerenciar Canais" e a categoria do bot.' });
         }
-    }
 
-    if (interaction.isButton() && interaction.customId === 'close_ticket') {
-        const channel = interaction.channel;
-        await interaction.reply({ content: '🔒 Fechando este canal em 5 segundos...' });
-        setTimeout(async () => {
-            try {
-                await channel.delete();
-            } catch (err) {
-                console.error('Erro ao deletar canal de ticket:', err);
+        else if (interaction.isButton() && interaction.customId === 'close_ticket') {
+            const channel = interaction.channel;
+            await interaction.reply({ content: '🔒 Fechando este canal em 5 segundos...' });
+            setTimeout(async () => {
+                try {
+                    await channel.delete();
+                } catch (err) {
+                    console.error('Erro ao deletar canal de ticket:', err);
+                }
+            }, 5000);
+        }
+    } catch (error) {
+        console.error('Erro na interação:', error);
+        if (interaction.isRepliable()) {
+            const errorMsg = { content: '❌ Ocorreu um erro interno ao processar esta solicitação.', ephemeral: true };
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply(errorMsg).catch(() => {});
+            } else {
+                await interaction.reply(errorMsg).catch(() => {});
             }
-        }, 5000);
+        }
     }
 });
 
