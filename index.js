@@ -37,12 +37,11 @@ const CLIENT_ID = process.env.CLIENT_ID;
 
 // CONFIGURAÇÃO DE CANAIS E CARGOS DA SOCIEDADE IMPERIAL
 const VOICE_24H_CHANNEL_ID = '1548519077507498044';
-const WELCOME_CHANNEL_ID = '1548497517107355759'; // Canal de boas-vindas configurado
-const TICKET_CATEGORY_ID = '1547601598694297651'; // Categoria onde os canais de tickets/encomendas serão criados
-const ROLE_NOVO_CARGO_ID = '1551988116514930730'; // Novo cargo configurado para a verificação
+const WELCOME_CHANNEL_ID = '1548497517107355759'; 
+const TICKET_CATEGORY_ID = '1547601598694297651'; 
+const ROLE_NOVO_CARGO_ID = '1551988116514930730'; 
 const WELCOME_IMAGE_URL = 'https://cdn.discordapp.net/attachments/1548529413715529768/1548529617361445006/9A95656B-B050-4937-9A4A-1F66AE4AD8B9.png?ex=6aa76417&is=6aa61297&hm=780d00c25aa1272979116f723d776d095201fde9f7bb12e1e24ea036b61c75c8';
 
-// Variáveis de áudio para o canal 24h
 let audioPlayer = createAudioPlayer();
 let currentConnection = null;
 
@@ -88,13 +87,11 @@ client.once('ready', async () => {
         console.error('Erro ao registrar comandos:', error);
     }
 
-    // Conecta no canal de voz 24h após 3 segundos para garantir o cache
     setTimeout(() => {
         connectToBaseVoiceChannel();
     }, 3000);
 });
 
-// Função para manter o bot conectado no canal de voz 24h
 async function connectToBaseVoiceChannel() {
     try {
         const guild = client.guilds.cache.get(GUILD_ID);
@@ -116,7 +113,6 @@ async function connectToBaseVoiceChannel() {
     }
 }
 
-// Evento de Boas-Vindas Temático com a Imagem
 client.on('guildMemberAdd', async member => {
     try {
         const channel = member.guild.channels.cache.get(WELCOME_CHANNEL_ID);
@@ -210,7 +206,6 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // Botão que abre o modal de verificação simplificado
     if (interaction.isButton() && interaction.customId === 'btn_abrir_verificacao') {
         const modal = new ModalBuilder()
             .setCustomId('modal_verificacao_simples')
@@ -238,7 +233,6 @@ client.on('interactionCreate', async interaction => {
         await interaction.showModal(modal);
     }
 
-    // Processa o Modal de Verificação -> Valida o Underline -> Altera apelido e atribui o novo cargo
     if (interaction.isModalSubmit() && interaction.customId === 'modal_verificacao_simples') {
         const nome = interaction.fields.getTextInputValue('input_nome').trim();
         const idCidade = interaction.fields.getTextInputValue('input_id').trim();
@@ -270,7 +264,6 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // Gerencia a criação dos canais de Tickets / Encomendas
     if (interaction.isStringSelectMenu() && interaction.customId === 'select_ticket') {
         const tipo = interaction.values[0];
         const guild = interaction.guild;
@@ -334,7 +327,6 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    // Botão para fechar o canal de ticket/encomenda criado
     if (interaction.isButton() && interaction.customId === 'close_ticket') {
         const channel = interaction.channel;
         await interaction.reply({ content: '🔒 Fechando este canal em 5 segundos...' });
