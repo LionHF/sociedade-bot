@@ -6,10 +6,14 @@ const {
     SlashCommandBuilder, 
     ActionRowBuilder, 
     StringSelectMenuBuilder, 
+    ButtonBuilder, 
+    ButtonStyle, 
     EmbedBuilder, 
     ModalBuilder, 
     TextInputBuilder, 
-    TextInputStyle 
+    TextInputStyle,
+    ChannelType,
+    PermissionsBitField
 } = require('discord.js');
 const { 
     joinVoiceChannel, 
@@ -34,13 +38,9 @@ const CLIENT_ID = process.env.CLIENT_ID;
 // CONFIGURAÇÃO DE CANAIS E CARGOS DA SOCIEDADE IMPERIAL
 const VOICE_24H_CHANNEL_ID = '1548519077507498044';
 const WELCOME_CHANNEL_ID = '1548497517107355759'; // Canal de boas-vindas configurado
-const ROLE_FACCAO_ID = '1548475677030883415'; // Cargo principal (Sociedade Imperial)
-const ROLE_MECANICA_RODEO_ID = '1548477524474855476'; // Mecânica Rodeo
-const ROLE_FF_VEICULOS_ID = '1548506117087297566'; // FF Veículos
+const TICKET_CATEGORY_ID = '1547601598694297651'; // Categoria onde os canais de tickets/encomendas serão criados
+const ROLE_NOVO_CARGO_ID = '1551988116514930730'; // Novo cargo configurado para a verificação
 const WELCOME_IMAGE_URL = 'https://cdn.discordapp.net/attachments/1548529413715529768/1548529617361445006/9A95656B-B050-4937-9A4A-1F66AE4AD8B9.png?ex=6aa76417&is=6aa61297&hm=780d00c25aa1272979116f723d776d095201fde9f7bb12e1e24ea036b61c75c8';
-
-// Armazenamento temporário dos dados do modal por usuário
-const tempVerificationData = new Map();
 
 // Variáveis de áudio para o canal 24h
 let audioPlayer = createAudioPlayer();
@@ -64,7 +64,15 @@ client.once('ready', async () => {
         
         new SlashCommandBuilder()
             .setName('setup')
-            .setDescription('Envia o painel interativo de verificação da Sociedade Imperial')
+            .setDescription('Envia os painéis interativos da Sociedade Imperial')
+            .addStringOption(option =>
+                option.setName('painel')
+                    .setDescription('Escolha o painel que deseja enviar')
+                    .setRequired(true)
+                    .addChoices(
+                        { name: 'Verificação', value: 'verificacao' },
+                        { name: 'Tickets / Encomendas', value: 'tickets' }
+                    ))
     ];
 
     const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
@@ -145,113 +153,93 @@ client.on('interactionCreate', async interaction => {
         } 
         
         else if (commandName === 'setup') {
-            const embedVerif = new EmbedBuilder()
-                .setTitle('🎭 Bem-vindo ao sistema de verificação da Sociedade Imperial!')
-                .setDescription(
-                    '**Atenção:** Siga rigorosamente o processo abaixo para liberar o seu acesso ao servidor.\n\n' +
-                    'Escolha uma das opções abaixo no menu para iniciar:\n\n' +
-                    '🛡️ **Iniciar 1ª Fase (Registro de Identidade)**\n' +
-                    'Informe o seu Nome/RG (obrigatório com underline `_`) e o seu ID na cidade para alterar seu apelido automático e receber o cargo da facção.\n\n' +
-                    '🏢 **Iniciar 2ª Fase (Vínculo Empresarial)**\n' +
-                    'Caso já tenha feito a 1ª fase, selecione sua empresa para vincular seu cargo secundário (*Mecânica Rodeo*, *FF Veículos* ou *Nenhum*).'
-                )
-                .setColor(0x0f0f0f)
-                .setImage(WELCOME_IMAGE_URL);
+            const tipoPainel = interaction.options.getString('painel');
 
-            const selectMenu = new StringSelectMenuBuilder()
-                .setCustomId('select_fase_verificacao')
-                .setPlaceholder('Selecione a fase de verificação...')
-                .addOptions([
-                    {
-                        label: '1ª Fase: Registrar Identidade (Nome e ID)',
-                        description: 'Insira seu RG e ID para atualizar seu apelido e receber o cargo.',
-                        value: 'fase_1',
-                        emoji: '🛡️'
-                    },
-                    {
-                        label: '2ª Fase: Escolher Empresa / Vínculo',
-                        description: 'Selecione sua empresa (Mecânica Rodeo, FF Veículos ou Nenhum).',
-                        value: 'fase_2',
-                        emoji: '🏢'
-                    }
-                ]);
+            if (tipoPainel === 'verificacao') {
+                const embedVerif = new EmbedBuilder()
+                    .setTitle('🎭 Sistema de Verificação - Sociedade Imperial')
+                    .setDescription(
+                        '**Atenção:** Siga rigorosamente o processo abaixo para liberar o seu acesso ao servidor.\n\n' +
+                        'Clique no botão abaixo para informar o seu **Nome/RG** (obrigatório com o caractere underline `_`) e o seu **ID** na cidade. Seu apelido será alterado automaticamente e o seu cargo será concedido.'
+                    )
+                    .setColor(0x0f0f0f)
+                    .setImage(WELCOME_IMAGE_URL);
 
-            const row = new ActionRowBuilder().addComponents(selectMenu);
+                const row = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('btn_abrir_verificacao')
+                        .setLabel('Fazer Verificação')
+                        .setStyle(ButtonStyle.Success)
+                        .setEmoji('🛡️')
+                );
 
-            await interaction.reply({ content: 'Painel de verificação interativo enviado!', ephemeral: true });
-            await interaction.channel.send({ embeds: [embedVerif], components: [row] });
+                await interaction.reply({ content: 'Painel de verificação enviado!', ephemeral: true });
+                await interaction.channel.send({ embeds: [embedVerif], components: [row] });
+            } 
+            
+            else if (tipoPainel === 'tickets') {
+                const embedTicket = new EmbedBuilder()
+                    .setTitle('📦 Central de Encomendas e Atendimento - Sociedade Imperial')
+                    .setDescription('Precisa realizar uma encomenda ou falar com a nossa equipe?\n\nSelecione uma das opções abaixo no menu suspenso para abrir o seu canal de atendimento privado.')
+                    .setColor(0x0f0f0f)
+                    .setImage(WELCOME_IMAGE_URL);
+
+                const selectMenu = new StringSelectMenuBuilder()
+                    .setCustomId('select_ticket')
+                    .setPlaceholder('Selecione o tipo de atendimento...')
+                    .addOptions([
+                        {
+                            label: 'Realizar Pedido',
+                            description: 'Faça a sua encomenda ou pedido exclusivo.',
+                            value: 'pedido',
+                            emoji: '📦'
+                        },
+                        {
+                            label: 'Atendimento',
+                            description: 'Fale diretamente com a nossa equipe de suporte/gestão.',
+                            value: 'atendimento',
+                            emoji: '💬'
+                        }
+                    ]);
+
+                const row = new ActionRowBuilder().addComponents(selectMenu);
+
+                await interaction.reply({ content: 'Painel de tickets/encomendas enviado!', ephemeral: true });
+                await interaction.channel.send({ embeds: [embedTicket], components: [row] });
+            }
         }
     }
 
-    // Gerencia a escolha do Menu Suspenso principal do painel
-    if (interaction.isStringSelectMenu() && interaction.customId === 'select_fase_verificacao') {
-        const escolhaFase = interaction.values[0];
+    // Botão que abre o modal de verificação simplificado
+    if (interaction.isButton() && interaction.customId === 'btn_abrir_verificacao') {
+        const modal = new ModalBuilder()
+            .setCustomId('modal_verificacao_simples')
+            .setTitle('Registro de Identidade');
 
-        if (escolhaFase === 'fase_1') {
-            // Abre o Modal de Nome e ID da 1ª Fase
-            const modal = new ModalBuilder()
-                .setCustomId('modal_verificacao_fase1')
-                .setTitle('1ª Fase - Registro de Identidade');
+        const nomeInput = new TextInputBuilder()
+            .setCustomId('input_nome')
+            .setLabel('Nome (RG / Personagem)')
+            .setPlaceholder('Ex: Don_Corleone')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
 
-            const nomeInput = new TextInputBuilder()
-                .setCustomId('input_nome')
-                .setLabel('Nome (RG / Personagem)')
-                .setPlaceholder('Ex: Don_Corleone')
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true);
+        const idInput = new TextInputBuilder()
+            .setCustomId('input_id')
+            .setLabel('ID na Cidade')
+            .setPlaceholder('Ex: 123')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
 
-            const idInput = new TextInputBuilder()
-                .setCustomId('input_id')
-                .setLabel('ID na Cidade')
-                .setPlaceholder('Ex: 123')
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true);
+        modal.addComponents(
+            new ActionRowBuilder().addComponents(nomeInput),
+            new ActionRowBuilder().addComponents(idInput)
+        );
 
-            modal.addComponents(
-                new ActionRowBuilder().addComponents(nomeInput),
-                new ActionRowBuilder().addComponents(idInput)
-            );
-
-            await interaction.showModal(modal);
-        } 
-        else if (escolhaFase === 'fase_2') {
-            // Abre o menu da 2ª Fase (Empresas) se já tiver passado pela 1ª
-            const selectEmpresa = new StringSelectMenuBuilder()
-                .setCustomId('select_empresa_verificacao')
-                .setPlaceholder('Selecione sua empresa...')
-                .addOptions([
-                    {
-                        label: 'Mecânica Rodeo',
-                        description: 'Trabalha na Mecânica Rodeo.',
-                        value: 'mecanica_rodeo',
-                        emoji: '🔧'
-                    },
-                    {
-                        label: 'FF Veículos',
-                        description: 'Trabalha na FF Veículos.',
-                        value: 'ff_veiculos',
-                        emoji: '🚗'
-                    },
-                    {
-                        label: 'Nenhum',
-                        description: 'Não trabalha em nenhuma das empresas acima.',
-                        value: 'nenhum',
-                        emoji: '❌'
-                    }
-                ]);
-
-            const row = new ActionRowBuilder().addComponents(selectEmpresa);
-
-            await interaction.reply({ 
-                content: `🏢 **2ª Fase de Verificação:** Selecione abaixo a empresa na qual você atua para vincular o seu cargo correspondente:`, 
-                components: [row], 
-                ephemeral: true 
-            });
-        }
+        await interaction.showModal(modal);
     }
 
-    // Processa o Modal da 1ª Fase -> Valida o Underline -> Altera apelido e dá o cargo da facção
-    if (interaction.isModalSubmit() && interaction.customId === 'modal_verificacao_fase1') {
+    // Processa o Modal de Verificação -> Valida o Underline -> Altera apelido e atribui o novo cargo
+    if (interaction.isModalSubmit() && interaction.customId === 'modal_verificacao_simples') {
         const nome = interaction.fields.getTextInputValue('input_nome').trim();
         const idCidade = interaction.fields.getTextInputValue('input_id').trim();
         const member = interaction.member;
@@ -269,59 +257,94 @@ client.on('interactionCreate', async interaction => {
 
         try {
             await member.setNickname(novoApelido);
-            await member.roles.add(ROLE_FACCAO_ID);
-
-            // Salva na memória que completou a 1ª fase
-            tempVerificationData.set(interaction.user.id, true);
+            await member.roles.add(ROLE_NOVO_CARGO_ID);
 
             await interaction.editReply({ 
-                content: `✅ **1ª Fase Concluída com Sucesso!**\n\n• Apelido alterado para: **${novoApelido}**\n• Cargo principal atribuído: **Sociedade Imperial**\n\nAgora você já pode ir novamente ao menu principal do painel e escolher a **2ª Fase** para definir sua empresa!` 
+                content: `✅ **Verificação Concluída com Sucesso!**\n\n• Apelido alterado para: **${novoApelido}**\n• Cargo principal atribuído com sucesso.` 
             });
         } catch (error) {
-            console.error('Erro na 1ª fase:', error);
+            console.error('Erro na verificação:', error);
             await interaction.editReply({ 
                 content: `⚠️ Ocorreu um erro ao alterar seu apelido ou atribuir o cargo. Certifique-se de que o cargo do bot está posicionado acima na hierarquia do Discord.` 
             });
         }
     }
 
-    // Processa a escolha da empresa da 2ª Fase
-    if (interaction.isStringSelectMenu() && interaction.customId === 'select_empresa_verificacao') {
-        const escolha = interaction.values[0];
+    // Gerencia a criação dos canais de Tickets / Encomendas
+    if (interaction.isStringSelectMenu() && interaction.customId === 'select_ticket') {
+        const tipo = interaction.values[0];
+        const guild = interaction.guild;
         const member = interaction.member;
-        
-        const jaFezPrimeiraFase = tempVerificationData.get(interaction.user.id);
-
-        if (!jaFezPrimeiraFase) {
-            return interaction.reply({ content: '❌ Você precisa concluir a **1ª Fase (Registro de Identidade)** antes de escolher a sua empresa!', ephemeral: true });
-        }
 
         await interaction.deferReply({ ephemeral: true });
 
         try {
-            let empresaNome = 'Nenhuma (Apenas Facção)';
-
-            if (escolha === 'mecanica_rodeo') {
-                await member.roles.add(ROLE_MECANICA_RODEO_ID);
-                empresaNome = 'Mecânica Rodeo';
-            } else if (escolha === 'ff_veiculos') {
-                await member.roles.add(ROLE_FF_VEICULOS_ID);
-                empresaNome = 'FF Veículos';
-            }
-
-            // Limpa o registro temporário
-            tempVerificationData.delete(interaction.user.id);
-
-            await interaction.editReply({ 
-                content: `🎉 **Processo de Verificação Concluído 100%!**\n\n• Empresa vinculada: **${empresaNome}**\n• Todos os acessos e cargos foram liberados com sucesso.` 
+            const ticketChannel = await guild.channels.create({
+                name: `${tipo}-${member.user.username}`,
+                type: ChannelType.GuildText,
+                parent: TICKET_CATEGORY_ID || null,
+                permissionOverwrites: [
+                    {
+                        id: guild.id,
+                        deny: [PermissionsBitField.Flags.ViewChannel],
+                    },
+                    {
+                        id: member.id,
+                        allow: [
+                            PermissionsBitField.Flags.ViewChannel,
+                            PermissionsBitField.Flags.SendMessages,
+                            PermissionsBitField.Flags.ReadMessageHistory
+                        ],
+                    },
+                    {
+                        id: client.user.id,
+                        allow: [
+                            PermissionsBitField.Flags.ViewChannel,
+                            PermissionsBitField.Flags.SendMessages,
+                            PermissionsBitField.Flags.ManageChannels
+                        ]
+                    }
+                ]
             });
+
+            const tituloEmbed = tipo === 'pedido' ? '📦 Novo Pedido / Encomenda' : '💬 Atendimento Geral';
+            const descricaoEmbed = tipo === 'pedido' 
+                ? `Olá ${member}, descreva detalhadamente os itens e quantidades da sua encomenda. Nossa equipe responderá em breve.`
+                : `Olá ${member}, descreva o motivo do seu contato. Nossa equipe o atenderá em breve.`;
+
+            const embedWelcome = new EmbedBuilder()
+                .setTitle(tituloEmbed)
+                .setDescription(`${descricaoEmbed}\n\nPara fechar este canal a qualquer momento, clique no botão abaixo.`)
+                .setColor(0x0f0f0f);
+
+            const closeRow = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId('close_ticket')
+                    .setLabel('Fechar Atendimento')
+                    .setStyle(ButtonStyle.Danger)
+                    .setEmoji('🔒')
+            );
+
+            await ticketChannel.send({ content: `${member}`, embeds: [embedWelcome], components: [closeRow] });
+            await interaction.editReply({ content: `✅ Seu canal foi aberto com sucesso em ${ticketChannel}!` });
 
         } catch (error) {
-            console.error('Erro na 2ª fase:', error);
-            await interaction.editReply({ 
-                content: `⚠️ Ocorreu um erro ao atribuir o cargo da empresa. Verifique a hierarquia de cargos do bot.` 
-            });
+            console.error('Erro ao criar canal de ticket:', error);
+            await interaction.editReply({ content: '❌ Ocorreu um erro ao tentar criar o seu canal. Verifique as permissões do bot e a categoria.' });
         }
+    }
+
+    // Botão para fechar o canal de ticket/encomenda criado
+    if (interaction.isButton() && interaction.customId === 'close_ticket') {
+        const channel = interaction.channel;
+        await interaction.reply({ content: '🔒 Fechando este canal em 5 segundos...' });
+        setTimeout(async () => {
+            try {
+                await channel.delete();
+            } catch (err) {
+                console.error('Erro ao deletar canal de ticket:', err);
+            }
+        }, 5000);
     }
 });
 
