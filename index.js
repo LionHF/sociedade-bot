@@ -17,8 +17,7 @@ const {
 } = require('discord.js');
 const { 
     joinVoiceChannel, 
-    createAudioPlayer, 
-    AudioPlayerStatus 
+    createAudioPlayer 
 } = require('@discordjs/voice');
 
 const client = new Client({
@@ -38,7 +37,7 @@ const CLIENT_ID = process.env.CLIENT_ID;
 // CONFIGURAÇÃO DE CANAIS E CARGOS DA SOCIEDADE IMPERIAL
 const VOICE_24H_CHANNEL_ID = '1548519077507498044';
 const WELCOME_CHANNEL_ID = '1548497517107355759'; 
-const TICKET_CATEGORY_ID = '1551986702715723877'; // Categoria atualizada para os tickets
+const TICKET_CATEGORY_ID = '1551986702715723877'; 
 const ROLE_NOVO_CARGO_ID = '1551988116514930730'; 
 const WELCOME_IMAGE_URL = 'https://cdn.discordapp.net/attachments/1548529413715529768/1548529617361445006/9A95656B-B050-4937-9A4A-1F66AE4AD8B9.png?ex=6aa76417&is=6aa61297&hm=780d00c25aa1272979116f723d776d095201fde9f7bb12e1e24ea036b61c75c8';
 
@@ -111,7 +110,7 @@ async function connectToBaseVoiceChannel() {
     } catch (error) {
         console.error('Erro ao conectar no canal de voz 24h:', error);
     }
-});
+}
 
 client.on('guildMemberAdd', async member => {
     try {
@@ -265,13 +264,15 @@ client.on('interactionCreate', async interaction => {
     }
 
     if (interaction.isStringSelectMenu() && interaction.customId === 'select_ticket') {
+        // 1. Responde IMEDIATAMENTE (defer) para evitar o erro de tempo limite de 3 segundos do Discord
+        await interaction.deferReply({ ephemeral: true });
+
         const tipo = interaction.values[0];
         const guild = interaction.guild;
         const member = interaction.member;
 
-        await interaction.deferReply({ ephemeral: true });
-
         try {
+            // Cria o canal dentro da categoria informada
             const ticketChannel = await guild.channels.create({
                 name: `${tipo}-${member.user.username}`,
                 type: ChannelType.GuildText,
@@ -282,7 +283,7 @@ client.on('interactionCreate', async interaction => {
                         deny: [PermissionsBitField.Flags.ViewChannel],
                     },
                     {
-                        id: member.id, // Permite apenas para quem abriu o ticket
+                        id: member.id, // Permite para quem abriu o ticket
                         allow: [
                             PermissionsBitField.Flags.ViewChannel,
                             PermissionsBitField.Flags.SendMessages,
@@ -290,7 +291,7 @@ client.on('interactionCreate', async interaction => {
                         ],
                     },
                     {
-                        id: client.user.id, // Permissões essenciais para o bot gerenciar
+                        id: client.user.id, // Permissões do bot
                         allow: [
                             PermissionsBitField.Flags.ViewChannel,
                             PermissionsBitField.Flags.SendMessages,
@@ -307,7 +308,7 @@ client.on('interactionCreate', async interaction => {
 
             const embedWelcome = new EmbedBuilder()
                 .setTitle(tituloEmbed)
-                .setDescription(`${descricaoEmbed}\n\nPara fechar este canal a vontade, clique no botão abaixo.`)
+                .setDescription(`${descricaoEmbed}\n\nPara fechar este canal a qualquer momento, clique no botão abaixo.`)
                 .setColor(0x0f0f0f);
 
             const closeRow = new ActionRowBuilder().addComponents(
@@ -319,11 +320,13 @@ client.on('interactionCreate', async interaction => {
             );
 
             await ticketChannel.send({ content: `${member}`, embeds: [embedWelcome], components: [closeRow] });
+            
+            // Edita a resposta adiada informando que deu certo
             await interaction.editReply({ content: `✅ Seu canal foi aberto com sucesso em ${ticketChannel}!` });
 
         } catch (error) {
             console.error('Erro ao criar canal de ticket:', error);
-            await interaction.editReply({ content: '❌ Ocorreu um erro ao tentar criar o seu canal. Verifique as permissões do bot e se o ID da categoria está correto.' });
+            await interaction.editReply({ content: '❌ Ocorreu um erro ao tentar criar o seu canal. Verifique as permissões de "Gerenciar Canais" e a categoria do bot.' });
         }
     }
 
