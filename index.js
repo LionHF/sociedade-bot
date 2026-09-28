@@ -70,7 +70,18 @@ client.once('ready', async () => {
                     .addChoices(
                         { name: 'Verificação', value: 'verificacao' },
                         { name: 'Tickets / Encomendas', value: 'tickets' }
-                    ))
+                    )),
+
+        // NOVO COMANDO /limpar
+        new SlashCommandBuilder()
+            .setName('limpar')
+            .setDescription('Limpa uma quantidade de mensagens do canal')
+            .addIntegerOption(option =>
+                option.setName('quantidade')
+                    .setDescription('Número de mensagens a serem apagadas (1 a 100)')
+                    .setMinValue(1)
+                    .setMaxValue(100)
+                    .setRequired(true))
     ];
 
     const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
@@ -197,6 +208,28 @@ client.on('interactionCreate', async interaction => {
 
                     await interaction.reply({ content: 'Painel de tickets enviado!', ephemeral: true });
                     await interaction.channel.send({ embeds: [embedTicket], components: [row] });
+                }
+            }
+
+            // LÓGICA DO COMANDO /limpar
+            else if (commandName === 'limpar') {
+                // Verifica se o membro tem permissão para gerenciar mensagens
+                if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
+                    return interaction.reply({ content: '❌ Você não tem permissão para gerenciar mensagens (`Gerenciar Mensagens`) neste servidor.', ephemeral: true });
+                }
+
+                const quantidade = interaction.options.getInteger('quantidade');
+
+                await interaction.deferReply({ ephemeral: true });
+
+                try {
+                    // Deleta as mensagens em massa
+                    const mensagensDeletadas = await interaction.channel.bulkDelete(quantidade, true);
+
+                    await interaction.editReply({ content: `🧹 Com sucesso! Foram apagadas **${mensagensDeletadas.size}** mensagens deste canal.` });
+                } catch (error) {
+                    console.error('Erro ao limpar mensagens:', error);
+                    await interaction.editReply({ content: '❌ Ocorreu um erro ao tentar apagar as mensagens. Lembre-se de que o Discord não permite apagar mensagens com mais de 14 dias de existência em massa.' });
                 }
             }
         }
