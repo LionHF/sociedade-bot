@@ -34,7 +34,7 @@ const client = new Client({
 const GUILD_ID = process.env.GUILD_ID;
 const CLIENT_ID = process.env.CLIENT_ID;
 
-// CONFIGURAÇÃO DE CANAIS E CARGOS DA SOCIEDADE IMPERIAL
+// CONFIGURAÇÃO DE CANAIS E CARGOS - CAVEIRAS S.A.
 const VOICE_24H_CHANNEL_ID = '1548519077507498044';
 const WELCOME_CHANNEL_ID = '1548497517107355759'; 
 const TICKET_CATEGORY_ID = '1551986702715723877'; 
@@ -45,7 +45,7 @@ let audioPlayer = createAudioPlayer();
 let currentConnection = null;
 
 client.once('ready', async () => {
-    console.log(`Bot online como ${client.user.tag}! Sociedade Imperial operando nas sombras.`);
+    console.log(`Bot online como ${client.user.tag}! Caveiras S.A. rodando na estrada e no asfalto.`);
 
     const commands = [
         new SlashCommandBuilder()
@@ -62,7 +62,7 @@ client.once('ready', async () => {
         
         new SlashCommandBuilder()
             .setName('setup')
-            .setDescription('Envia os painéis interativos da Sociedade Imperial')
+            .setDescription('Envia os painéis interativos da Caveiras S.A.')
             .addStringOption(option =>
                 option.setName('painel')
                     .setDescription('Escolha o painel que deseja enviar')
@@ -118,13 +118,13 @@ client.on('guildMemberAdd', async member => {
         if (!channel) return;
 
         const embedWelcome = new EmbedBuilder()
-            .setTitle('🎭 Novo Membro na Sociedade Imperial')
-            .setDescription(`Saudações, ${member}. As portas da alta sociedade e das sombras se abriram para você.\n\nPara transitar em nosso meio com segurança e elegância, dirija-se ao canal de verificação, registre sua identidade na cidade e declare sua lealdade.`)
+            .setTitle('🏍️ Novo Integrante na Caveiras S.A.')
+            .setDescription(`Saudações, ${member}. Você encostou na sede do nosso Moto Club.\n\nPara rodar com a gente na lei ou nos negócios por fora, passe pelo canal de verificação, registre sua identidade na cidade e vista o nosso brasão.`)
             .setColor(0x0f0f0f)
             .setImage(WELCOME_IMAGE_URL)
             .setTimestamp();
 
-        await channel.send({ content: `Seja bem-vindo(a) aos domínios da Sociedade Imperial, ${member}!`, embeds: [embedWelcome] });
+        await channel.send({ content: `Bem-vindo(a) aos domínios da Caveiras S.A., ${member}!`, embeds: [embedWelcome] });
     } catch (error) {
         console.error('Erro ao enviar mensagem de boas-vindas:', error);
     }
@@ -148,10 +148,10 @@ client.on('interactionCreate', async interaction => {
 
                 if (tipoPainel === 'verificacao') {
                     const embedVerif = new EmbedBuilder()
-                        .setTitle('🎭 Sistema de Verificação - Sociedade Imperial')
+                        .setTitle('🛡️ Registro de Identidade - Caveiras S.A.')
                         .setDescription(
-                            '**Atenção:** Siga rigorosamente o processo abaixo para liberar o seu acesso ao servidor.\n\n' +
-                            'Clique no botão abaixo para informar o seu **Nome/RG** (obrigatório com o caractere underline `_`) e o seu **ID** na cidade. Seu apelido será alterado automaticamente e o seu cargo será concedido.'
+                            '**Atenção:** Siga rigorosamente o processo abaixo para liberar o seu acesso à nossa sede e rodar com o clube.\n\n' +
+                            'Clique no botão abaixo para informar o seu **Nome/RG** (obrigatório com o caractere underline `_` ex: `Nomedo_Sobrenome`) e o seu **ID** na cidade. Seu apelido será atualizado e o cargo será liberado.'
                         )
                         .setColor(0x0f0f0f)
                         .setImage(WELCOME_IMAGE_URL);
@@ -170,24 +170,24 @@ client.on('interactionCreate', async interaction => {
                 
                 else if (tipoPainel === 'tickets') {
                     const embedTicket = new EmbedBuilder()
-                        .setTitle('📦 Central de Encomendas e Atendimento - Sociedade Imperial')
-                        .setDescription('Precisa realizar uma encomenda ou falar com a nossa equipe?\n\nSelecione uma das opções abaixo no menu suspenso para abrir o seu canal de atendimento privado.')
+                        .setTitle('📦 Balcão de Encomendas & Contatos - Caveiras S.A.')
+                        .setDescription('Precisa fechar uma encomenda exclusiva ou falar diretamente com a diretoria do Moto Club?\n\nSelecione uma das opções abaixo no menu suspenso para abrir o seu canal privado.')
                         .setColor(0x0f0f0f)
                         .setImage(WELCOME_IMAGE_URL);
 
                     const selectMenu = new StringSelectMenuBuilder()
                         .setCustomId('select_ticket')
-                        .setPlaceholder('Selecione o tipo de atendimento...')
+                        .setPlaceholder('Escolha o tipo de atendimento...')
                         .addOptions([
                             {
-                                label: 'Realizar Pedido',
-                                description: 'Faça a sua encomenda ou pedido exclusivo.',
+                                label: 'Fazer Encomenda',
+                                description: 'Faça o seu pedido de peças, armas ou itens exclusivos.',
                                 value: 'pedido',
                                 emoji: '📦'
                             },
                             {
-                                label: 'Atendimento',
-                                description: 'Fale diretamente com a nossa equipe de suporte/gestão.',
+                                label: 'Atendimento / Parcerias',
+                                description: 'Fale com a gestão do Moto Club ou feche negócios.',
                                 value: 'atendimento',
                                 emoji: '💬'
                             }
@@ -195,7 +195,7 @@ client.on('interactionCreate', async interaction => {
 
                     const row = new ActionRowBuilder().addComponents(selectMenu);
 
-                    await interaction.reply({ content: 'Painel de tickets/encomendas enviado!', ephemeral: true });
+                    await interaction.reply({ content: 'Painel de tickets enviado!', ephemeral: true });
                     await interaction.channel.send({ embeds: [embedTicket], components: [row] });
                 }
             }
@@ -204,12 +204,12 @@ client.on('interactionCreate', async interaction => {
         else if (interaction.isButton() && interaction.customId === 'btn_abrir_verificacao') {
             const modal = new ModalBuilder()
                 .setCustomId('modal_verificacao_simples')
-                .setTitle('Registro de Identidade');
+                .setTitle('Registro - Caveiras S.A.');
 
             const nomeInput = new TextInputBuilder()
                 .setCustomId('input_nome')
-                .setLabel('Nome (RG / Personagem)')
-                .setPlaceholder('Ex: Don_Corleone')
+                .setLabel('Nome / RG (Personagem)')
+                .setPlaceholder('Ex: John_Vance')
                 .setStyle(TextInputStyle.Short)
                 .setRequired(true);
 
@@ -235,7 +235,7 @@ client.on('interactionCreate', async interaction => {
 
             if (!nome.includes('_')) {
                 return interaction.reply({ 
-                    content: `❌ **Verificação negada!** O seu nome no formato RP deve conter obrigatoriamente o underline (\`_\`), seguindo o padrão da cidade (Ex: \`Don_Corleone\`).`, 
+                    content: `❌ **Verificação negada!** O seu nome no formato RP deve conter obrigatoriamente o underline (\`_\`), seguindo o padrão da cidade (Ex: \`John_Vance\`).`, 
                     ephemeral: true 
                 });
             }
@@ -244,12 +244,22 @@ client.on('interactionCreate', async interaction => {
             
             await interaction.deferReply({ ephemeral: true });
 
-            await member.setNickname(novoApelido);
-            await member.roles.add(ROLE_NOVO_CARGO_ID);
+            try {
+                // Tenta alterar o apelido
+                await member.setNickname(novoApelido).catch(err => console.log("Erro ao mudar apelido:", err.message));
+                
+                // Tenta adicionar o cargo configurado
+                await member.roles.add(ROLE_NOVO_CARGO_ID);
 
-            await interaction.editReply({ 
-                content: `✅ **Verificação Concluída com Sucesso!**\n\n• Apelido alterado para: **${novoApelido}**\n• Cargo principal atribuído com sucesso.` 
-            });
+                await interaction.editReply({ 
+                    content: `✅ **Bem-vindo à Caveiras S.A.!**\n\n• Apelido atualizado para: **${novoApelido}**\n• Cargo de Cidadão/Membro concedido com sucesso.` 
+                });
+            } catch (err) {
+                console.error('ERRO CRITICO AO ADICIONAR CARGO:', err);
+                await interaction.editReply({ 
+                    content: `⚠️ Falha ao atribuir o cargo. Certifique-se de que o cargo do bot está posicionado **acima** do cargo correspondente nas configurações do servidor.` 
+                });
+            }
         }
 
         else if (interaction.isStringSelectMenu() && interaction.customId === 'select_ticket') {
@@ -259,7 +269,6 @@ client.on('interactionCreate', async interaction => {
             const guild = interaction.guild;
             const member = interaction.member;
 
-            // Cria o canal dentro da categoria respeitando as permissões herdadas/configuradas
             const ticketChannel = await guild.channels.create({
                 name: `${tipo}-${member.user.username}`,
                 type: ChannelType.GuildText,
@@ -288,31 +297,31 @@ client.on('interactionCreate', async interaction => {
                 ]
             });
 
-            const tituloEmbed = tipo === 'pedido' ? '📦 Novo Pedido / Encomenda' : '💬 Atendimento Geral';
+            const tituloEmbed = tipo === 'pedido' ? '📦 Encomenda Reservada' : '💬 Atendimento da Diretoria';
             const descricaoEmbed = tipo === 'pedido' 
-                ? `Olá ${member}, descreva detalhadamente os itens e quantidades da sua encomenda. Nossa equipe responderá em breve.`
-                : `Olá ${member}, descreva o motivo do seu contato. Nossa equipe o atenderá em breve.`;
+                ? `Salve ${member}, detalhe o que você precisa encomendar com a nossa equipe. Silêncio e discrição são nossa marca.`
+                : `Salve ${member}, relate o motivo do seu contato com a Caveiras S.A. Retornaremos assim que possível.`;
 
             const embedWelcome = new EmbedBuilder()
                 .setTitle(tituloEmbed)
-                .setDescription(`${descricaoEmbed}\n\nPara fechar este canal a qualquer momento, clique no botão abaixo.`)
+                .setDescription(`${descricaoEmbed}\n\nPara encerrar este canal com segurança a qualquer momento, clique no botão abaixo.`)
                 .setColor(0x0f0f0f);
 
             const closeRow = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
                     .setCustomId('close_ticket')
-                    .setLabel('Fechar Atendimento')
+                    .setLabel('Fechar Canal')
                     .setStyle(ButtonStyle.Danger)
                     .setEmoji('🔒')
             );
 
             await ticketChannel.send({ content: `${member}`, embeds: [embedWelcome], components: [closeRow] });
-            await interaction.editReply({ content: `✅ Seu canal foi aberto com sucesso em ${ticketChannel}!` });
+            await interaction.editReply({ content: `✅ Seu canal privativo foi aberto em ${ticketChannel}!` });
         }
 
         else if (interaction.isButton() && interaction.customId === 'close_ticket') {
             const channel = interaction.channel;
-            await interaction.reply({ content: '🔒 Fechando este canal em 5 segundos...' });
+            await interaction.reply({ content: '🔒 Destruindo os rastros e fechando este canal em 5 segundos...' });
             setTimeout(async () => {
                 try {
                     await channel.delete();
